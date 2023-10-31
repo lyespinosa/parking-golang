@@ -2,67 +2,51 @@ package main
 
 import (
 	"fmt"
-	"image/color"
+	"math/rand"
 	"sync"
 	"time"
-
-	"github.com/oakmound/oak/v4"
-	"github.com/oakmound/oak/v4/alg/floatgeom"
-	"github.com/oakmound/oak/v4/entities"
-	"github.com/oakmound/oak/v4/scene"
-	"gonum.org/v1/gonum/stat/distuv"
 )
 
-const parkingSpaces = 20
-
-func main() {
-	oak.AddScene("parkingLot", scene.Scene{Start: func(ctx *scene.Context) {
-
-		for i := 0; i < parkingSpaces/2; i++ {
-			entities.New(ctx,
-				entities.WithRect(floatgeom.NewRect2WH(250+float64(i*40), 150, 25, 45)),
-				entities.WithColor(color.RGBA{128, 128, 128, 255}),
-			)
-			entities.New(ctx,
-				entities.WithRect(floatgeom.NewRect2WH(250+float64(i*40), 250, 25, 45)),
-				entities.WithColor(color.RGBA{128, 128, 128, 255}),
-			)
-		}
-
-		entities.New(ctx,
-			entities.WithRect(floatgeom.NewRect2WH(180, 180, 25, 80)),
-			entities.WithColor(color.RGBA{255, 0, 0, 255}),
-		)
-
-	}})
-	oak.Init("parkingLot")
+func productor(buffer chan<- int, wg *sync.WaitGroup) {
+	defer wg.Done()
+	for i := 0; i < 30; i++ {
+		fmt.Println("+ Prodocido: ", i)
+		buffer <- i
+		time.Sleep(time.Second)
+	}
+	close(buffer)
 }
 
-const lambda = 2
-const numCars = 20
+func almacenador(buffer <-chan int, wg *sync.WaitGroup) {
+	defer wg.Done()
 
-func entrada() {
-	var wg sync.WaitGroup
-	mutex := make(chan struct{}, 1)
-	poisson := distuv.Poisson{Lambda: lambda, Src: nil}
-	for i := 1; i <= numCars; i++ {
-		wg.Add(1)
-		waitTime := time.Duration(poisson.Rand()) * time.Second
-		time.Sleep(waitTime)
-		go func(carID int) {
-			defer wg.Done()
+	almacen := make([]int, 0, 20)
 
-			fmt.Printf("Car %d spanwed.\n", carID)
-			mutex <- struct{}{} // Bloquea la entrada
-
-			fmt.Printf("Car %d entering to enter parking.\n", carID)
-			time.Sleep(4 * time.Second)
-			fmt.Printf("Car %d leaving to enter parking.\n", carID)
-
-			<-mutex
-		}(i)
+	for num := range buffer {
+		if len(almacen) < 20 {
+			almacen = append(almacen, num)
+			fmt.Println("Almacenado", almacen)
+		} else {
+			index := rand.Intn(20)
+			fmt.Printf("Sacando: %d, del lugar: %d\n", almacen[index], index)
+			almacen[index] = num
+			fmt.Println("Almacen actualizado", almacen)
+		}
+		time.Sleep(2 * time.Second)
 	}
+}
+
+func main() {
+	rand.Seed(time.Now().UnixNano())
+
+	var wg sync.WaitGroup
+	buffer := make(chan int, 5)
+
+	wg.Add(1)
+	go productor(buffer, &wg)
+
+	wg.Add(1)
+	go almacenador(buffer, &wg)
 
 	wg.Wait()
-	fmt.Println("All cars have entered and exited the parking lot.")
 }
