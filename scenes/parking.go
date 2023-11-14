@@ -17,12 +17,12 @@ func NewParkingScene() *MainScene {
 	return &MainScene{}
 }
 
-func (ps *MainScene) Draw() {
+func (ps *MainScene) Generate() {
 	firstTime := true
 	manager := models.NewCarHandler()
-	doorM := sync.Mutex{}
+	mutex := sync.Mutex{}
 
-	_ = oak.AddScene("mainScene", scene.Scene{
+	oak.AddScene("mainScene", scene.Scene{
 		Start: func(ctx *scene.Context) {
 			parking := models.NewParking(ctx)
 
@@ -34,8 +34,7 @@ func (ps *MainScene) Draw() {
 
 				for {
 					car := models.NewCar(ctx)
-					go models.CarBehaviour(car, manager, parking, &doorM)
-
+					go models.CarBehaviour(car, manager, parking, &mutex)
 					time.Sleep(time.Millisecond * time.Duration(models.GetRandomNumber(1000, 2000)))
 				}
 

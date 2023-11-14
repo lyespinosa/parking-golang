@@ -30,19 +30,19 @@ func getRouteEntering(x, y float64, column int) *[]Route {
 	var directions []Route
 
 	if column == 1 {
-		directions = append(directions, *newRoute("left", 445))
+		directions = append(directions, *newRoute("left", 550))
 	} else if column == 2 {
-		directions = append(directions, *newRoute("left", 355))
+		directions = append(directions, *newRoute("left", 400))
 	} else if column == 3 {
-		directions = append(directions, *newRoute("left", 265))
+		directions = append(directions, *newRoute("left", 300))
 	} else if column == 4 {
-		directions = append(directions, *newRoute("left", 175))
+		directions = append(directions, *newRoute("left", 200))
 	} else if column == 5 {
-		directions = append(directions, *newRoute("left", 85))
+		directions = append(directions, *newRoute("left", 100))
 	}
 
-	directions = append(directions, *newRoute("down", y+5))
-	directions = append(directions, *newRoute("left", x+5))
+	directions = append(directions, *newRoute("down", y+3))
+	directions = append(directions, *newRoute("left", x+3))
 
 	return &directions
 }
@@ -50,8 +50,8 @@ func getRouteEntering(x, y float64, column int) *[]Route {
 func getRouteLeaving() *[]Route {
 	var directions []Route
 
-	directions = append(directions, *newRoute("down", 380))
-	directions = append(directions, *newRoute("right", 475))
+	directions = append(directions, *newRoute("down", 440))
+	directions = append(directions, *newRoute("right", 570))
 	directions = append(directions, *newRoute("up", 185))
 
 	return &directions
