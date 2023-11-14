@@ -1,85 +1,104 @@
 package main
 
 import (
-	"fmt"
+	"image/color"
 	"math/rand"
 	"sync"
 	"time"
+
+	"github.com/oakmound/oak/v4"
+	"github.com/oakmound/oak/v4/event"
+	"github.com/oakmound/oak/v4/render"
+	"github.com/oakmound/oak/v4/scene"
 )
 
-func productor(buffer chan<- int, wg *sync.WaitGroup) {
-	defer wg.Done()
-	for i := 0; i < 100; i++ {
-		fmt.Println("Producido:", i)
-		buffer <- i
-		time.Sleep(time.Millisecond * 100)
-	}
-	close(buffer)
+const (
+	espacios      = 20
+	anchoEspacio  = 30
+	altoEspacio   = 30
+	margenEspacio = 5
+	velocidad     = 2 // Píxeles por frame
+)
+
+type Dato struct {
+	render.Sprite
+	destX, destY float64
+	almacenado   bool
+	mu           sync.Mutex
 }
 
-func elementoVive(num int, almacen *[]int, espacioDisponible chan struct{}, mu *sync.Mutex, wg *sync.WaitGroup) {
-	defer wg.Done()
-	tiempo := time.Duration(rand.Intn(3)+1) * time.Second
-	time.Sleep(tiempo)
-
-	mu.Lock()
-	for i, val := range *almacen {
-		if val == num {
-			*almacen = append((*almacen)[:i], (*almacen)[i+1:]...)
-			fmt.Printf("Elemento eliminado: %d. Almacen actualizado: %v, ocupados %v \n", num, *almacen, len(*almacen))
-			espacioDisponible <- struct{}{}
-			break
-		}
+func NuevoDato(x, y, destX, destY float64) *Dato {
+	cubo := render.NewColorBox(anchoEspacio-10, altoEspacio-10, color.RGBA{100, 100, 250, 255})
+	cubo.SetPos(x, y)
+	return &Dato{
+		Sprite: cubo,
+		destX:  destX,
+		destY:  destY,
 	}
-	mu.Unlock()
 }
 
-func almacenador(buffer <-chan int, almacen *[]int, espacioDisponible chan struct{}, mu *sync.Mutex, elementosEspera *[]int, wg *sync.WaitGroup) {
-	for {
-		select {
-		case num, ok := <-buffer:
-			if !ok {
-				return
-			}
-			mu.Lock()
-			if len(*almacen) < cap(*almacen) {
-				*almacen = append(*almacen, num)
-				fmt.Println("Almacenado el ", num, ": ", *almacen, "Ocupados:", len(*almacen))
-				wg.Add(1)
-				go elementoVive(num, almacen, espacioDisponible, mu, wg)
-			} else {
-				*elementosEspera = append(*elementosEspera, num)
-			}
-			mu.Unlock()
-		case <-espacioDisponible:
-			mu.Lock()
-			if len(*elementosEspera) > 0 {
-				num := (*elementosEspera)[0]
-				*elementosEspera = (*elementosEspera)[1:]
-				*almacen = append(*almacen, num)
-				fmt.Println("Almacenado desde espera el ", num, " :", *almacen, "Ocupados:", len(*almacen))
-				wg.Add(1)
-				go elementoVive(num, almacen, espacioDisponible, mu, wg)
-			}
-			mu.Unlock()
-		}
+// Mover actualiza la posición del Dato hacia su destino.
+func (d *Dato) Mover() bool {
+	d.mu.Lock()
+	defer d.mu.Unlock()
+
+	if d.almacenado {
+		return false
 	}
+
+	x, y := d.GetPos()
+	if x < d.destX {
+		x += velocidad
+	}
+	if y < d.destY {
+		y += velocidad
+	}
+
+	// Si el Dato está lo suficientemente cerca de su destino, lo marca como almacenado
+	if int(x) >= int(d.destX)-velocidad && int(y) >= int(d.destY)-velocidad {
+		d.almacenado = true
+		d.SetPos(d.destX, d.destY)
+		return true
+	}
+
+	d.SetPos(x, y)
+	return false
 }
 
 func main() {
 	rand.Seed(time.Now().UnixNano())
 
-	var wg sync.WaitGroup
-	mu := &sync.Mutex{}
-	buffer := make(chan int, 5)
-	almacen := make([]int, 0, 20)
-	espacioDisponible := make(chan struct{}, cap(almacen))
-	elementosEspera := make([]int, 0)
+	oak.AddScene("estacionamiento", scene.Scene{
+		Start: func(ctx *scene.Context) {
+			espaciosRender := make([]*render.ColorBox, espacios)
 
-	wg.Add(1)
-	go productor(buffer, &wg)
+			// Crear espacios de estacionamiento
+			for i := 0; i < espacios; i++ {
+				x := margenEspacio + (i%5)*(anchoEspacio+margenEspacio)
+				y := margenEspacio + (i/5)*(altoEspacio+margenEspacio)
 
-	go almacenador(buffer, &almacen, espacioDisponible, mu, &elementosEspera, &wg)
+				espacio := render.NewColorBox(anchoEspacio, altoEspacio, color.RGBA{150, 150, 150, 255})
+				espacio.SetPos(float64(x), float64(y))
+				ctx.DrawStack.Draw(espacio, 0)
+				espaciosRender[i] = espacio
+			}
 
-	wg.Wait()
+			// Crear y mover un cubo (dato) hacia un espacio de estacionamiento
+			dato := NuevoDato(100, 100, float64(margenEspacio), float64(margenEspacio))
+			ctx.DrawStack.Draw(dato.Sprite, 1)
+
+			// Mover el Dato en cada tick
+			event.GlobalBind(ctx.CID, int(event.Tick), func(_ event.CID, _ interface{}) int {
+				if almacenado := dato.Mover(); almacenado {
+					// Marcar el espacio de estacionamiento como ocupado
+					i := int(dato.destY/margenEspacio)*5 + int(dato.destX/margenEspacio)
+					espaciosRender[i].SetFillColor(color.RGBA{100, 250, 100, 255})
+				}
+				return 0
+			})
+		},
+	})
+
+	// Iniciar el juego con la escena del estacionamiento
+	oak.Init("estacionamiento")
 }

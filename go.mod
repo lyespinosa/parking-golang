@@ -1,4 +1,4 @@
-module example.com/m/v2
+module parking
 
 go 1.21.3
 
