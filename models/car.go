@@ -14,9 +14,9 @@ import (
 )
 
 const (
-	initDoorPoint = 185.00
-	endDoorPoint  = 145.00
-	speed         = 8
+	spawn   = 185.00
+	despawn = 145.00
+	speed   = 8
 )
 
 type Car struct {
@@ -57,7 +57,7 @@ func (c *Car) Enqueue(manager *CarHandler) {
 }
 
 func (c *Car) EnterParking(manager *CarHandler) {
-	for c.Y() < initDoorPoint {
+	for c.Y() < spawn {
 		if !c.isCollision("down", manager.GetCars()) {
 			c.ShiftY(1)
 			time.Sleep(speed * time.Millisecond)
@@ -66,7 +66,7 @@ func (c *Car) EnterParking(manager *CarHandler) {
 }
 
 func (c *Car) FinishEnterParking(manager *CarHandler) {
-	for c.Y() > endDoorPoint {
+	for c.Y() > despawn {
 		if !c.isCollision("up", manager.GetCars()) {
 			c.ShiftY(-1)
 			time.Sleep(speed * time.Millisecond)
@@ -85,19 +85,19 @@ func (c *Car) Enter(spot *Spot, manager *CarHandler) {
 					time.Sleep(speed * time.Millisecond)
 				}
 			}
-		} else if routes[index].route == "down" {
-			c.entity.Renderable.(*render.Switch).Set("Down")
-			for c.Y() < routes[index].spot {
-				if !c.isCollision("down", manager.GetCars()) {
-					c.ShiftY(1)
-					time.Sleep(speed * time.Millisecond)
-				}
-			}
 		} else if routes[index].route == "left" {
 			c.entity.Renderable.(*render.Switch).Set("Left")
 			for c.X() > routes[index].spot {
 				if !c.isCollision("left", manager.GetCars()) {
 					c.ShiftX(-1)
+					time.Sleep(speed * time.Millisecond)
+				}
+			}
+		} else if routes[index].route == "down" {
+			c.entity.Renderable.(*render.Switch).Set("Down")
+			for c.Y() < routes[index].spot {
+				if !c.isCollision("down", manager.GetCars()) {
+					c.ShiftY(1)
 					time.Sleep(speed * time.Millisecond)
 				}
 			}
@@ -116,19 +116,19 @@ func (c *Car) Enter(spot *Spot, manager *CarHandler) {
 func (c *Car) Leave(spot *Spot, manager *CarHandler) {
 	for index := 0; index < len(*spot.GetRouteLeaving()); index++ {
 		routes := *spot.GetRouteLeaving()
-		if routes[index].route == "left" {
-			c.entity.Renderable.(*render.Switch).Set("Left")
-			for c.X() > routes[index].spot {
-				if !c.isCollision("left", manager.GetCars()) {
-					c.ShiftX(-1)
-					time.Sleep(speed * time.Millisecond)
-				}
-			}
-		} else if routes[index].route == "right" {
+		if routes[index].route == "right" {
 			c.entity.Renderable.(*render.Switch).Set("Right")
 			for c.X() < routes[index].spot {
 				if !c.isCollision("right", manager.GetCars()) {
 					c.ShiftX(1)
+					time.Sleep(speed * time.Millisecond)
+				}
+			}
+		} else if routes[index].route == "left" {
+			c.entity.Renderable.(*render.Switch).Set("Left")
+			for c.X() > routes[index].spot {
+				if !c.isCollision("left", manager.GetCars()) {
+					c.ShiftX(-1)
 					time.Sleep(speed * time.Millisecond)
 				}
 			}

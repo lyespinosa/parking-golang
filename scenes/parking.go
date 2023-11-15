@@ -41,4 +41,6 @@ func (ps *MainScene) Generate() {
 			})
 		},
 	})
+
+	oak.Init("mainScene")
 }

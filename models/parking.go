@@ -98,8 +98,11 @@ func setUpScene(ctx *scene.Context, spots []*Spot) {
 	parkingArea := floatgeom.NewRect2(10, 170, 610, 470)
 	entities.New(ctx, entities.WithRect(parkingArea), entities.WithColor(color.RGBA{100, 100, 100, 1}))
 
-	parkingDoor := floatgeom.NewRect2(530, 140, 600, 160)
-	entities.New(ctx, entities.WithRect(parkingDoor), entities.WithColor(color.RGBA{250, 250, 250, 1}))
+	parkingEnter := floatgeom.NewRect2(510, 140, 520, 160)
+	entities.New(ctx, entities.WithRect(parkingEnter), entities.WithColor(color.RGBA{250, 250, 250, 1}))
+
+	parkingLeave := floatgeom.NewRect2(600, 140, 610, 160)
+	entities.New(ctx, entities.WithRect(parkingLeave), entities.WithColor(color.RGBA{250, 250, 250, 1}))
 
 	for _, spot := range spots {
 		entities.New(ctx, entities.WithRect(*spot.GetArea()), entities.WithColor(color.RGBA{255, 255, 255, 255}))
