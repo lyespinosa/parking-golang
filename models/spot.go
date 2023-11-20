@@ -5,11 +5,11 @@ import (
 )
 
 type Spot struct {
+	isEmpty       bool
+	number        int
 	area          *floatgeom.Rect2
 	routeEntering *[]Route
 	routeLeaving  *[]Route
-	number        int
-	isAvailable   bool
 }
 
 func NewSpot(x, y, x2, y2 float64, column, number int) *Spot {
@@ -22,39 +22,8 @@ func NewSpot(x, y, x2, y2 float64, column, number int) *Spot {
 		routeEntering: routeEntering,
 		routeLeaving:  routeLeaving,
 		number:        number,
-		isAvailable:   true,
+		isEmpty:       true,
 	}
-}
-
-func getRouteEntering(x, y float64, column int) *[]Route {
-	var directions []Route
-
-	if column == 1 {
-		directions = append(directions, *newRoute("left", 550))
-	} else if column == 2 {
-		directions = append(directions, *newRoute("left", 400))
-	} else if column == 3 {
-		directions = append(directions, *newRoute("left", 300))
-	} else if column == 4 {
-		directions = append(directions, *newRoute("left", 200))
-	} else if column == 5 {
-		directions = append(directions, *newRoute("left", 100))
-	}
-
-	directions = append(directions, *newRoute("down", y+3))
-	directions = append(directions, *newRoute("left", x+3))
-
-	return &directions
-}
-
-func getRouteLeaving() *[]Route {
-	var directions []Route
-
-	directions = append(directions, *newRoute("down", 440))
-	directions = append(directions, *newRoute("right", 570))
-	directions = append(directions, *newRoute("up", 185))
-
-	return &directions
 }
 
 func (p *Spot) GetArea() *floatgeom.Rect2 {
@@ -73,11 +42,40 @@ func (p *Spot) GetRouteLeaving() *[]Route {
 	return p.routeLeaving
 }
 
-func (p *Spot) GetIsAvailable() bool {
+func (p *Spot) GetIsEmpty() bool {
 
-	return p.isAvailable
+	return p.isEmpty
 }
 
-func (p *Spot) SetIsAvailable(isAvailable bool) {
-	p.isAvailable = isAvailable
+func (p *Spot) SetIsEmpty(isEmpty bool) {
+	p.isEmpty = isEmpty
+}
+
+func getRouteEntering(x, y float64, column int) *[]Route {
+	var directions []Route
+	directions = append(directions, *newRoute("down", y+3))
+	directions = append(directions, *newRoute("left", x+3))
+	if column == 1 {
+		directions = append(directions, *newRoute("left", 550))
+	} else if column == 2 {
+		directions = append(directions, *newRoute("left", 400))
+	} else if column == 3 {
+		directions = append(directions, *newRoute("left", 300))
+	} else if column == 4 {
+		directions = append(directions, *newRoute("left", 200))
+	} else if column == 5 {
+		directions = append(directions, *newRoute("left", 100))
+	}
+
+	return &directions
+}
+
+func getRouteLeaving() *[]Route {
+	var directions []Route
+
+	directions = append(directions, *newRoute("down", 440))
+	directions = append(directions, *newRoute("right", 570))
+	directions = append(directions, *newRoute("up", 185))
+
+	return &directions
 }

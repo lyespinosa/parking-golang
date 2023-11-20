@@ -7,7 +7,6 @@ import (
 )
 
 func main() {
-	parkingScene := scenes.NewParkingScene()
-	parkingScene.Generate()
+	scenes.NewParkingScene().Start()
 	oak.Init("mainScene")
 }

@@ -17,7 +17,7 @@ func NewParkingScene() *MainScene {
 	return &MainScene{}
 }
 
-func (ps *MainScene) Generate() {
+func (ps *MainScene) Start() {
 	firstTime := true
 	manager := models.NewCarHandler()
 	mutex := sync.Mutex{}

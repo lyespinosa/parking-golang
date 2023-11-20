@@ -13,25 +13,25 @@ func NewCarHandler() *CarHandler {
 	}
 }
 
-func (cm *CarHandler) Add(car *Car) {
-	cm.Mutex.Lock()
-	defer cm.Mutex.Unlock()
-	cm.Cars = append(cm.Cars, car)
+func (carHandle *CarHandler) Add(car *Car) {
+	carHandle.Mutex.Lock()
+	defer carHandle.Mutex.Unlock()
+	carHandle.Cars = append(carHandle.Cars, car)
 }
 
-func (cm *CarHandler) Remove(car *Car) {
-	cm.Mutex.Lock()
-	defer cm.Mutex.Unlock()
-	for i, c := range cm.Cars {
+func (carHandle *CarHandler) Remove(car *Car) {
+	carHandle.Mutex.Lock()
+	defer carHandle.Mutex.Unlock()
+	for i, c := range carHandle.Cars {
 		if c == car {
-			cm.Cars = append(cm.Cars[:i], cm.Cars[i+1:]...)
+			carHandle.Cars = append(carHandle.Cars[:i], carHandle.Cars[i+1:]...)
 			break
 		}
 	}
 }
 
-func (cm *CarHandler) GetCars() []*Car {
-	cm.Mutex.Lock()
-	defer cm.Mutex.Unlock()
-	return cm.Cars
+func (carHandle *CarHandler) GetCars() []*Car {
+	carHandle.Mutex.Lock()
+	defer carHandle.Mutex.Unlock()
+	return carHandle.Cars
 }
