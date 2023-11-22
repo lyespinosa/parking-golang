@@ -1,7 +1,14 @@
 package models
 
 import (
+	"fmt"
+
 	"github.com/oakmound/oak/v4/alg/floatgeom"
+)
+
+var (
+	column    = 0
+	iteration = 0
 )
 
 type Spot struct {
@@ -12,7 +19,11 @@ type Spot struct {
 	routeLeaving  *[]Route
 }
 
-func NewSpot(x, y, x2, y2 float64, column, number int) *Spot {
+func NewSpot(x, y, x2, y2 float64) *Spot {
+
+	column = (iteration % 5) + 1
+	iteration++
+	fmt.Println(column)
 	routeEntering := getRouteEntering(x, y, column)
 	routeLeaving := getRouteLeaving()
 	area := floatgeom.NewRect2(x, y, x2, y2)
@@ -21,7 +32,7 @@ func NewSpot(x, y, x2, y2 float64, column, number int) *Spot {
 		area:          &area,
 		routeEntering: routeEntering,
 		routeLeaving:  routeLeaving,
-		number:        number,
+		number:        iteration,
 		isEmpty:       true,
 	}
 }
@@ -53,8 +64,7 @@ func (p *Spot) SetIsEmpty(isEmpty bool) {
 
 func getRouteEntering(x, y float64, column int) *[]Route {
 	var directions []Route
-	directions = append(directions, *newRoute("down", y+3))
-	directions = append(directions, *newRoute("left", x+3))
+
 	if column == 1 {
 		directions = append(directions, *newRoute("left", 550))
 	} else if column == 2 {
@@ -66,6 +76,8 @@ func getRouteEntering(x, y float64, column int) *[]Route {
 	} else if column == 5 {
 		directions = append(directions, *newRoute("left", 100))
 	}
+	directions = append(directions, *newRoute("down", y+3))
+	directions = append(directions, *newRoute("left", x+3))
 
 	return &directions
 }

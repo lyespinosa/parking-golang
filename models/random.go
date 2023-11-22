@@ -5,8 +5,8 @@ import (
 	"time"
 )
 
-func GetRandomNumber(min, max int) int {
+func RandomSleep(value int) {
 	rand.Seed(time.Now().UnixNano())
-	number := rand.Intn(max) + min
-	return number
+	number := rand.Intn(value*10) + value
+	time.Sleep(time.Millisecond * time.Duration(number))
 }

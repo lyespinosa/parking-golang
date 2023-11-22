@@ -3,11 +3,14 @@ package scenes
 import (
 	"parking/models"
 	"sync"
-	"time"
 
 	"github.com/oakmound/oak/v4"
 	"github.com/oakmound/oak/v4/event"
 	"github.com/oakmound/oak/v4/scene"
+)
+
+var (
+	mutex sync.Mutex
 )
 
 type MainScene struct {
@@ -17,30 +20,23 @@ func NewParkingScene() *MainScene {
 	return &MainScene{}
 }
 
-func (ps *MainScene) Start() {
-	firstTime := true
-	manager := models.NewCarHandler()
-	mutex := sync.Mutex{}
+func runParking(ctx *scene.Context, handler *models.CarHandler, parking *models.Parking) {
+	event.GlobalBind(ctx, event.Enter, func(enterPayload event.EnterPayload) event.Response {
+		for {
+			car := models.NewCar(ctx)
+			go car.RunCar(&mutex, handler, parking)
+			models.RandomSleep(300)
+		}
+	})
+}
 
+func (ps *MainScene) Start() {
 	oak.AddScene("mainScene", scene.Scene{
 		Start: func(ctx *scene.Context) {
+			handler := models.NewCarHandler()
 			parking := models.NewParking(ctx)
-
-			event.GlobalBind(ctx, event.Enter, func(enterPayload event.EnterPayload) event.Response {
-				if !firstTime {
-					return 0
-				}
-				firstTime = false
-
-				for {
-					car := models.NewCar(ctx)
-					go models.CarBehaviour(car, manager, parking, &mutex)
-					time.Sleep(time.Millisecond * time.Duration(models.GetRandomNumber(1000, 2000)))
-				}
-
-			})
+			go runParking(ctx, handler, parking)
 		},
 	})
-
 	oak.Init("mainScene")
 }
